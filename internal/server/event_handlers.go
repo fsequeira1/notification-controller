@@ -95,6 +95,15 @@ func (s *EventServer) handleEvent() func(w http.ResponseWriter, r *http.Request)
 				if source.Namespace == "" {
 					source.Namespace = alert.Namespace
 				}
+
+				if s.noCrossNamespaceRefs && source.Namespace != alert.Namespace {
+					accessDenied := fmt.Errorf(
+						"can't access '%s/%s/%s', cross-namespace references have been blocked",
+						source.Kind, source.Namespace, source.Name)
+					s.logger.Error(accessDenied, "access denied to cross-namespace source")
+					continue
+				}
+
 				if (source.Name == "*" || event.InvolvedObject.Name == source.Name) &&
 					event.InvolvedObject.Namespace == source.Namespace &&
 					event.InvolvedObject.Kind == source.Kind {
