@@ -147,6 +147,8 @@ func (s *EventServer) handleEvent() func(w http.ResponseWriter, r *http.Request)
 
 			webhook := provider.Spec.Address
 			token := ""
+			username := provider.Spec.Username
+			password := ""
 			headers := make(map[string]string)
 			if provider.Spec.SecretRef != nil {
 				var secret corev1.Secret
@@ -167,6 +169,14 @@ func (s *EventServer) handleEvent() func(w http.ResponseWriter, r *http.Request)
 
 				if t, ok := secret.Data["token"]; ok {
 					token = string(t)
+				}
+
+				if u, ok := secret.Data["username"]; ok {
+					username = string(u)
+				}
+
+				if p, ok := secret.Data["password"]; ok {
+					password = string(p)
 				}
 
 				if h, ok := secret.Data["headers"]; ok {
@@ -223,7 +233,7 @@ func (s *EventServer) handleEvent() func(w http.ResponseWriter, r *http.Request)
 				continue
 			}
 
-			factory := notifier.NewFactory(webhook, provider.Spec.Proxy, provider.Spec.Username, provider.Spec.Channel, token, headers, certPool)
+			factory := notifier.NewFactory(webhook, provider.Spec.Proxy, username, provider.Spec.Channel, token, headers, certPool, password)
 			sender, err := factory.Notifier(provider.Spec.Type)
 			if err != nil {
 				s.logger.Error(err, "failed to initialize provider",
