@@ -146,10 +146,10 @@ func (s *EventServer) handleEvent() func(w http.ResponseWriter, r *http.Request)
 			}
 
 			webhook := provider.Spec.Address
-			token := ""
 			username := provider.Spec.Username
+			proxy := provider.Spec.Proxy
+			token := ""
 			password := ""
-			proxy := provider.Spec.Address
 			headers := make(map[string]string)
 			if provider.Spec.SecretRef != nil {
 				var secret corev1.Secret
@@ -168,6 +168,10 @@ func (s *EventServer) handleEvent() func(w http.ResponseWriter, r *http.Request)
 					webhook = string(address)
 				}
 
+				if p, ok := secret.Data["password"]; ok {
+					password = string(p)
+				}
+
 				if p, ok := secret.Data["proxy"]; ok {
 					proxy = string(p)
 				}
@@ -178,10 +182,6 @@ func (s *EventServer) handleEvent() func(w http.ResponseWriter, r *http.Request)
 
 				if u, ok := secret.Data["username"]; ok {
 					username = string(u)
-				}
-
-				if p, ok := secret.Data["password"]; ok {
-					password = string(p)
 				}
 
 				if h, ok := secret.Data["headers"]; ok {
